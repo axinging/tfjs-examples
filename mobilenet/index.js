@@ -18,6 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {IMAGENET_CLASSES} from './imagenet_classes';
+import {startLog, logKernelTime} from './debug';
 
 const MOBILENET_MODEL_PATH =
     // tslint:disable-next-line:max-line-length
@@ -36,13 +37,14 @@ const mobilenetDemo = async () => {
   // faster. Call `dispose` to release the WebGL memory allocated for the return
   // value of `predict`.
   mobilenet.predict(tf.zeros([1, IMAGE_SIZE, IMAGE_SIZE, 3])).dispose();
-
+  await logKernelTime(kernels);
   status('');
 
   // Make a prediction through the locally hosted cat.jpg.
   const catElement = document.getElementById('cat');
   if (catElement.complete && catElement.naturalHeight !== 0) {
     predict(catElement);
+    await logKernelTime(kernels);
     catElement.style.display = '';
   } else {
     catElement.onload = () => {
@@ -81,6 +83,7 @@ async function predict(imgElement) {
   const classes = await getTopKClasses(logits, TOPK_PREDICTIONS);
   const totalTime = performance.now() - startTime;
   status(`Done in ${Math.floor(totalTime)}ms`);
+  await logKernelTime(kernels);
 
   // Show the classes in the DOM.
   showResults(imgElement, classes);
@@ -184,5 +187,6 @@ const demoStatusElement = document.getElementById('status');
 const status = msg => demoStatusElement.innerText = msg;
 
 const predictionsElement = document.getElementById('predictions');
-
+let kernels = [];
+startLog(kernels);
 mobilenetDemo();
